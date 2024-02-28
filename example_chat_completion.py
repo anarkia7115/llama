@@ -32,6 +32,9 @@ def main(
         max_gen_len (int, optional): The maximum length of generated sequences. If None, it will be
             set to the model's max sequence length. Defaults to None.
     """
+    import os
+    lk = int(os.environ.get("LOCAL_RANK",0))
+    print(f"lk:{lk}")
     generator = Llama.build(
         ckpt_dir=ckpt_dir,
         tokenizer_path=tokenizer_path,
@@ -100,5 +103,54 @@ If a question does not make any sense, or is not factually coherent, explain why
         print("\n==================================\n")
 
 
+def test_api(
+    ckpt_dir: str,
+    tokenizer_path: str,
+    temperature: float = 0.6,
+    top_p: float = 0.9,
+    max_seq_len: int = 512,
+    max_batch_size: int = 8,
+    max_gen_len: Optional[int] = None,
+):
+    generator = Llama.build(
+        ckpt_dir=ckpt_dir,
+        tokenizer_path=tokenizer_path,
+        max_seq_len=max_seq_len,
+        max_batch_size=max_batch_size,
+    )
+
+    while True:
+        user_input = input("You say: ")
+        print("processing...")
+        dialogs: List[Dialog] = [
+            [{"role": "user", "content": user_input}]]
+
+        generator.chat_completion()
+        results = generator.chat_completion(
+            dialogs,  # type: ignore
+            max_gen_len=max_gen_len,
+            temperature=temperature,
+            top_p=top_p,
+        )
+
+        for dialog, result in zip(dialogs, results):
+            for msg in dialog:
+                print(f"{msg['role'].capitalize()}: {msg['content']}\n")
+            print(
+                f"> {result['generation']['role'].capitalize()}: {result['generation']['content']}"
+            )
+            print("\n==================================\n")
+
+
 if __name__ == "__main__":
-    fire.Fire(main)
+    #fire.Fire(main)
+    ckpt_dir = "llama-2-7b-chat/"
+    tokenizer_path = "tokenizer.model"
+    max_seq_len = 512 
+    max_batch_size = 6
+
+    test_api(
+        ckpt_dir=ckpt_dir, 
+        tokenizer_path=tokenizer_path, 
+        max_seq_len=max_seq_len, 
+        max_batch_size=max_batch_size)
