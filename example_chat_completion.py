@@ -125,21 +125,15 @@ def test_api(
         dialogs: List[Dialog] = [
             [{"role": "user", "content": user_input}]]
 
-        generator.chat_completion()
-        results = generator.chat_completion(
+        results = generator.stream_chat_completion(
             dialogs,  # type: ignore
             max_gen_len=max_gen_len,
             temperature=temperature,
             top_p=top_p,
         )
 
-        for dialog, result in zip(dialogs, results):
-            for msg in dialog:
-                print(f"{msg['role'].capitalize()}: {msg['content']}\n")
-            print(
-                f"> {result['generation']['role'].capitalize()}: {result['generation']['content']}"
-            )
-            print("\n==================================\n")
+        for row in results:
+            print(row,end=" ")
 
 
 if __name__ == "__main__":
